@@ -44,7 +44,7 @@ export function StatCard({
       
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-[var(--text-secondary)]">{title}</p>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)]">{title}</p>
           {Icon && (
             <div className={cn('p-2 rounded-lg', iconBgStyles[variant])}>
               <Icon className="w-5 h-5" />
@@ -52,7 +52,7 @@ export function StatCard({
           )}
         </div>
         
-        <p className="text-3xl font-bold mb-2">{value}</p>
+        <p className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">{value}</p>
         
         {change !== undefined && (
           <div className="flex items-center gap-2">

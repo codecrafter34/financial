@@ -67,19 +67,19 @@ export default function AdminPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">User Management</h1>
           <p className="text-[var(--text-secondary)] mt-1">
             Manage users and their access levels
           </p>
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="glass-card px-4 py-2 flex items-center gap-2">
-            <Users className="w-5 h-5 text-[var(--primary)]" />
-            <span className="font-medium">{data?.total || 0}</span>
-            <span className="text-[var(--text-muted)]">Total Users</span>
+          <div className="glass-card px-3 py-2 sm:px-4 flex items-center gap-2">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--primary)]" />
+            <span className="font-medium text-sm sm:text-base">{data?.total || 0}</span>
+            <span className="text-[var(--text-muted)] text-xs sm:text-sm">Total Users</span>
           </div>
         </div>
       </div>
@@ -100,7 +100,87 @@ export default function AdminPage() {
       
       {/* Users Table */}
       <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[var(--border)]">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="skeleton w-10 h-10 rounded-full" />
+                  <div className="flex-1">
+                    <div className="skeleton w-32 h-4 mb-1" />
+                    <div className="skeleton w-40 h-3" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="skeleton w-20 h-6" />
+                  <div className="skeleton w-16 h-6" />
+                </div>
+              </div>
+            ))
+          ) : filteredUsers.length === 0 ? (
+            <div className="p-8 text-center text-[var(--text-muted)]">
+              No users found
+            </div>
+          ) : (
+            filteredUsers.map((user, i) => {
+              const RoleIcon = roleIcons[user.role];
+              const isCurrentUser = user.id === currentUser?.id;
+              
+              return (
+                <div 
+                  key={user.id}
+                  className={cn(
+                    'p-4 animate-fade-in',
+                    isCurrentUser && 'bg-[var(--primary-light)]'
+                  )}
+                  style={{ animationDelay: `${i * 0.02}s` }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium flex-shrink-0">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium flex items-center gap-2">
+                        <span className="truncate">{user.name}</span>
+                        {isCurrentUser && (
+                          <span className="text-xs text-[var(--primary)] flex-shrink-0">(You)</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-[var(--text-muted)] truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <span className={cn('badge flex items-center gap-1', roleColors[user.role])}>
+                      <RoleIcon className="w-3 h-3" />
+                      {user.role}
+                    </span>
+                    <span className={cn('badge', statusColors[user.status])}>
+                      {user.status}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-3 text-sm text-[var(--text-secondary)] space-y-1">
+                    <p>
+                      <span className="text-[var(--text-muted)]">Last active: </span>
+                      {user.lastActiveAt 
+                        ? formatDate(user.lastActiveAt, { hour: '2-digit', minute: '2-digit' })
+                        : 'Never'}
+                    </p>
+                    <p>
+                      <span className="text-[var(--text-muted)]">Joined: </span>
+                      {formatDate(user.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--border)]">
@@ -200,11 +280,11 @@ export default function AdminPage() {
         
         {/* Pagination */}
         {data && data.total > 20 && (
-          <div className="flex items-center justify-between p-4 border-t border-[var(--border)]">
-            <p className="text-sm text-[var(--text-muted)]">
+          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border-t border-[var(--border)]">
+            <p className="text-sm text-[var(--text-muted)] text-center sm:text-left">
               Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, data.total)} of {data.total}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:ml-auto">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -228,27 +308,27 @@ export default function AdminPage() {
       </div>
       
       {/* Role permissions info */}
-      <div className="glass-card p-6">
-        <h3 className="text-lg font-semibold mb-4">Role Permissions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+      <div className="glass-card p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold mb-4">Role Permissions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="p-4 sm:p-6 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="w-5 h-5 text-blue-400" />
-              <h4 className="font-medium text-blue-400">Viewer</h4>
+              <h4 className="text-base sm:text-lg font-medium text-blue-400">Viewer</h4>
             </div>
-            <ul className="text-sm text-[var(--text-secondary)] space-y-1">
+            <ul className="text-xs sm:text-sm text-[var(--text-secondary)] space-y-1">
               <li>• View dashboard data</li>
               <li>• View own transactions</li>
               <li>• Basic analytics only</li>
             </ul>
           </div>
           
-          <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <div className="p-4 sm:p-6 rounded-lg bg-purple-500/10 border border-purple-500/20">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="w-5 h-5 text-purple-400" />
-              <h4 className="font-medium text-purple-400">Analyst</h4>
+              <h4 className="text-base sm:text-lg font-medium text-purple-400">Analyst</h4>
             </div>
-            <ul className="text-sm text-[var(--text-secondary)] space-y-1">
+            <ul className="text-xs sm:text-sm text-[var(--text-secondary)] space-y-1">
               <li>• All Viewer permissions</li>
               <li>• Access AI insights</li>
               <li>• View trends & health score</li>
@@ -256,12 +336,12 @@ export default function AdminPage() {
             </ul>
           </div>
           
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="p-4 sm:p-6 rounded-lg bg-red-500/10 border border-red-500/20">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck className="w-5 h-5 text-red-400" />
-              <h4 className="font-medium text-red-400">Admin</h4>
+              <h4 className="text-base sm:text-lg font-medium text-red-400">Admin</h4>
             </div>
-            <ul className="text-sm text-[var(--text-secondary)] space-y-1">
+            <ul className="text-xs sm:text-sm text-[var(--text-secondary)] space-y-1">
               <li>• All Analyst permissions</li>
               <li>• Create/edit/delete transactions</li>
               <li>• Manage users</li>

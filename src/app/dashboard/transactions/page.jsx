@@ -480,8 +480,9 @@ export default function TransactionsPage() {
       
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <div className="glass-card p-6 w-full max-w-md m-4 max-h-[90vh] overflow-y-auto">
+  <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-[9999]">
+  
+  <div className="glass-card max-h-[90vh] w-120 p-20  overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold">New Transaction</h2>
               <button

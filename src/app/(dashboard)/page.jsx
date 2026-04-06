@@ -51,10 +51,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header with Role Badge */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold">
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">
               Welcome back, <span className="gradient-text">{user?.name}</span>
             </h1>
             {RoleIcon && (
@@ -73,12 +73,12 @@ export default function DashboardPage() {
         
         <div className="flex items-center gap-4">
           {/* Period selector */}
-          <div className="flex items-center gap-2 p-1 bg-[var(--surface-2)] rounded-lg">
+          <div className="flex items-center gap-2 p-1 bg-[var(--surface-2)] rounded-lg overflow-x-auto flex-wrap sm:flex-nowrap">
             {['week', 'month', 'quarter', 'year'].map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   period === p
                     ? 'bg-[var(--primary)] text-white'
                     : 'text-[var(--text-secondary)] hover:text-white'
@@ -164,19 +164,19 @@ export default function DashboardPage() {
         <div>
           {/* Features Available for {ANALYST/ADMIN} */}
           <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">
               🤖 AI-Powered Insights & 📊 Financial Health
             </h2>
-            <p className="text-[var(--text-secondary)] mb-6">
+            <p className="text-sm sm:text-base text-[var(--text-secondary)] mb-6">
               Advanced analytics powered by rule-based AI engine. Includes anomaly detection using z-score and percentile analysis, spending insights with week-over-week comparisons, category analysis, and trend predictions.
             </p>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Insights */}
-            <div className="glass-card p-6">
-              <h3 className="text-lg font-semibold mb-2">💡 AI-Generated Insights</h3>
-              <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <div className="glass-card p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-2">💡 AI-Generated Insights</h3>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4">
                 "Your expenses increased 18% this week" • Category analysis • Trend predictions
               </p>
               {insightsLoading ? (
@@ -200,8 +200,8 @@ export default function DashboardPage() {
               ) : healthScore ? (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-2">⭐ Financial Health Score</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <h3 className="text-base sm:text-lg font-semibold mb-2">⭐ Financial Health Score</h3>
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
                       Calculated based on: Income/Expense Ratio (40%) • Spending Consistency (30%) • Anomaly Frequency (30%)
                     </p>
                   </div>
@@ -215,12 +215,12 @@ export default function DashboardPage() {
       
       {/* Viewer Role Message */}
       {effectiveRole === 'VIEWER' && (
-        <div className="glass-card p-6 border border-green-500/20 bg-green-500/10">
-          <div className="flex items-start gap-4">
-            <Eye className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" />
+        <div className="glass-card p-4 sm:p-6 border border-green-500/20 bg-green-500/10">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-green-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold mb-2">📖 Viewer Role Features</h3>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <h3 className="text-sm sm:text-base font-semibold mb-2">📖 Viewer Role Features</h3>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
                 You have read-only access to your transactions and basic financial summary. Upgrade to <strong>Analyst</strong> role to unlock AI-powered insights, health scores, advanced analytics, and trend predictions.
               </p>
             </div>
@@ -238,21 +238,21 @@ export default function DashboardPage() {
         
         {/* Recent Transactions Summary */}
         {summary?.recentActivity && summary.recentActivity.length > 0 && (
-          <div className="glass-card p-6">
-            <h3 className="text-lg font-semibold mb-6">Recent Activity</h3>
-            <div className="space-y-4">
+          <div className="glass-card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Recent Activity</h3>
+            <div className="space-y-3 sm:space-y-4">
               {summary.recentActivity.slice(0, 5).map((activity, i) => (
                 <div 
                   key={activity.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface-3)] transition-colors animate-fade-in"
+                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface-3)] transition-colors animate-fade-in"
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
-                  <div>
-                    <p className="font-medium text-sm">{activity.action}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{activity.description}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-xs sm:text-sm truncate">{activity.action}</p>
+                    <p className="text-xs text-[var(--text-muted)] truncate">{activity.description}</p>
                   </div>
                   {activity.amount && (
-                    <span className={`font-semibold ${
+                    <span className={`font-semibold text-xs sm:text-sm ml-2 flex-shrink-0 ${
                       activity.action.includes('Income') ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {activity.action.includes('Income') ? '+' : '-'}

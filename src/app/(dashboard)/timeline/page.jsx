@@ -77,9 +77,9 @@ export default function TimelinePage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Activity Timeline</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Activity Timeline</h1>
           <p className="text-[var(--text-secondary)] mt-1">
             Track all system events and activities
           </p>
@@ -89,7 +89,7 @@ export default function TimelinePage() {
           <select
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            className="input-field w-auto"
+            className="input-field w-full sm:w-auto"
           >
             <option value="">All Actions</option>
             <option value="USER">User Events</option>
@@ -102,7 +102,7 @@ export default function TimelinePage() {
       {/* Timeline */}
       <div className="relative">
         {/* Timeline line */}
-        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-[var(--border)]" />
+        <div className="absolute left-4 sm:left-8 top-0 bottom-0 w-0.5 bg-[var(--border)]" />
         
         {isLoading ? (
           <div className="space-y-8">
@@ -135,7 +135,7 @@ export default function TimelinePage() {
                 </div>
                 
                 {/* Events for this date */}
-                <div className="ml-20 space-y-4">
+                <div className="ml-12 sm:ml-20 space-y-4">
                   {events.map((event, i) => {
                     const Icon = actionIcons[event.action] || Clock;
                     const colorClass = actionColors[event.action] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
@@ -149,35 +149,35 @@ export default function TimelinePage() {
                       <div 
                         key={event.id}
                         className={cn(
-                          'glass-card p-4 border animate-fade-in',
+                          'glass-card p-3 sm:p-4 border animate-fade-in',
                           colorClass.split(' ')[2]
                         )}
                         style={{ animationDelay: `${i * 0.05}s` }}
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <div className={cn('p-2 rounded-lg', colorClass.split(' ').slice(0, 2).join(' '))}>
-                            <Icon className="w-5 h-5" />
+                            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
                           
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="font-medium">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+                              <h4 className="font-medium text-sm sm:text-base truncate">
                                 {event.description || event.action.replace(/_/g, ' ')}
                               </h4>
-                              <span className="text-xs text-[var(--text-muted)]">
+                              <span className="text-xs text-[var(--text-muted)] shrink-0">
                                 {formatRelativeTime(event.createdAt)}
                               </span>
                             </div>
                             
                             {event.userName && (
-                              <p className="text-sm text-[var(--text-secondary)] flex items-center gap-1">
+                              <p className="text-xs sm:text-sm text-[var(--text-secondary)] flex items-center gap-1">
                                 <User className="w-3 h-3" />
                                 {event.userName}
                               </p>
                             )}
                             
                             {event.payload && Object.keys(event.payload).length > 0 && (
-                              <div className="mt-2 p-2 rounded-lg bg-[var(--surface-1)] text-xs font-mono text-[var(--text-muted)]">
+                              <div className="mt-2 p-2 rounded-lg bg-[var(--surface-1)] text-xs font-mono text-[var(--text-muted)] overflow-x-auto">
                                 {JSON.stringify(event.payload, null, 2)}
                               </div>
                             )}
@@ -194,22 +194,22 @@ export default function TimelinePage() {
         
         {/* Pagination */}
         {data && data.total > 30 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
             </button>
-            <span className="text-[var(--text-secondary)]">
+            <span className="text-[var(--text-secondary)] text-center order-first sm:order-none">
               Page {page} of {Math.ceil(data.total / 30)}
             </span>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={page * 30 >= data.total}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               Next
               <ChevronRight className="w-4 h-4" />
