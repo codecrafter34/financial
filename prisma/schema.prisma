@@ -1,0 +1,142 @@
+// Intelligent Finance Control System - Database Schema
+// Event-driven architecture with role-based access control
+// MongoDB-compatible
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & ROLE MANAGEMENT
+// ============================================
+
+// Role: VIEWER, ANALYST, ADMIN (stored as string)
+// UserStatus: ACTIVE, INACTIVE, SUSPENDED (stored as string)
+
+model User {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  email         String      @unique
+  password      String
+  name          String
+  role          String      @default("VIEWER")
+  status        String      @default("ACTIVE")
+  
+  // Activity tracking
+  lastActiveAt  DateTime?
+  lastAction    String?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Relations
+  transactions  Transaction[]
+  events        Event[]
+}
+
+// ============================================
+// FINANCIAL RECORDS
+// ============================================
+
+// TransactionType: INCOME, EXPENSE (stored as string)
+// Category: SALARY, FREELANCE, INVESTMENT, FOOD, etc. (stored as string)
+
+model Transaction {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String          @db.ObjectId
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount        Float
+  type          String          // INCOME or EXPENSE
+  category      String          // Category name
+  date          DateTime        @default(now())
+  notes         String?
+  
+  // Multi-label classification (native array in MongoDB)
+  tags          String[]        @default([])
+  
+  // AI/Rule-based anomaly detection
+  isAnomaly     Boolean         @default(false)
+  anomalyReason String?
+  anomalyScore  Float?          // 0-1 confidence score
+  
+  // Soft delete
+  isDeleted     Boolean         @default(false)
+  deletedAt     DateTime?
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([category])
+  @@index([date])
+  @@index([isDeleted])
+  @@index([isAnomaly])
+}
+
+// ============================================
+// EVENT SOURCING (Activity Timeline)
+// ============================================
+
+// EventAction stored as string
+
+model Event {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?     @db.ObjectId
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  action      String      // Event action name
+  entityType  String?     // e.g., "Transaction", "User"
+  entityId    String?     // ID of the affected entity
+  
+  // Event payload (native JSON in MongoDB)
+  payload     Json?
+  
+  // Context metadata (native JSON in MongoDB)
+  metadata    Json?
+  
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// ============================================
+// GRANULAR PERMISSIONS
+// ============================================
+
+model Permission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  role      String   // VIEWER, ANALYST, ADMIN
+  resource  String   // e.g., "transactions", "users", "analytics"
+  action    String   // e.g., "create", "read", "update", "delete", "export"
+  allowed   Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([role, resource, action])
+}
+
+// ============================================
+// CACHED ANALYTICS (Performance optimization)
+// ============================================
+
+model AnalyticsCache {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId
+  cacheKey    String    // e.g., "summary_2024_03", "health_score"
+  data        Json      // Native JSON in MongoDB
+  expiresAt   DateTime
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@unique([userId, cacheKey])
+}
