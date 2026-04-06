@@ -42,6 +42,28 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage }) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+  const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
+  if (percentage < 5) return null; // Hide labels for very small slices
+
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+      className="text-xs font-semibold"
+      style={{ pointerEvents: 'none' }}
+    >
+      {`${percentage.toFixed(1)}%`}
+    </text>
+  );
+};
+
 export function CategoryChart({ data, className }) {
   if (!data || data.length === 0) {
     return (
@@ -73,6 +95,7 @@ export function CategoryChart({ data, className }) {
                 paddingAngle={2}
                 dataKey="total"
                 nameKey="category"
+                label={<CustomLabel />}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
