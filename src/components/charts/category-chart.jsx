@@ -1,6 +1,7 @@
 'use client';
 
 import { cn, formatCurrency } from '@/lib/utils.js';
+import { useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -9,19 +10,19 @@ import {
   Tooltip,
 } from 'recharts';
 
-const COLORS = [
-  '#3b82f6', // blue
-  '#8b5cf6', // purple
-  '#10b981', // green
-  '#f59e0b', // yellow
-  '#ef4444', // red
-  '#06b6d4', // cyan
-  '#ec4899', // pink
-  '#f97316', // orange
-  '#14b8a6', // teal
-  '#6366f1', // indigo
-  '#84cc16', // lime
-  '#a855f7', // violet
+const GRADIENT_COLORS = [
+  { start: '#3b82f6', end: '#1e40af' }, // blue
+  { start: '#8b5cf6', end: '#6d28d9' }, // purple
+  { start: '#10b981', end: '#047857' }, // green
+  { start: '#f59e0b', end: '#d97706' }, // amber
+  { start: '#ef4444', end: '#dc2626' }, // red
+  { start: '#06b6d4', end: '#0891b2' }, // cyan
+  { start: '#ec4899', end: '#be185d' }, // pink
+  { start: '#f97316', end: '#ea580c' }, // orange
+  { start: '#14b8a6', end: '#0d9488' }, // teal
+  { start: '#6366f1', end: '#4f46e5' }, // indigo
+  { start: '#84cc16', end: '#65a30d' }, // lime
+  { start: '#a855f7', end: '#7c3aed' }, // violet
 ];
 
 const CustomTooltip = ({ active, payload }) => {
@@ -30,13 +31,13 @@ const CustomTooltip = ({ active, payload }) => {
   const data = payload[0].payload;
   
   return (
-    <div className="glass-card p-3 border border-[var(--border)]">
-      <p className="text-sm font-medium">{data.category}</p>
-      <p className="text-sm text-[var(--text-secondary)]">
-        {formatCurrency(data.total)} ({data.percentage.toFixed(1)}%)
+    <div className="glass-card p-3 border border-[var(--border)] shadow-lg">
+      <p className="text-sm font-semibold text-[var(--text-primary)]">{data.category}</p>
+      <p className="text-sm text-[var(--text-secondary)] font-medium mt-1">
+        {formatCurrency(data.total)}
       </p>
-      <p className="text-xs text-[var(--text-muted)]">
-        {data.count} transaction{data.count !== 1 ? 's' : ''}
+      <p className="text-xs text-[var(--text-muted)] font-medium">
+        {data.percentage.toFixed(1)}% • {data.count} transaction{data.count !== 1 ? 's' : ''}
       </p>
     </div>
   );
@@ -47,7 +48,7 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage })
   const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
   const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
 
-  if (percentage < 5) return null; // Hide labels for very small slices
+  if (percentage < 5) return null;
 
   return (
     <text 
@@ -56,8 +57,12 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage })
       fill="white" 
       textAnchor={x > cx ? 'start' : 'end'} 
       dominantBaseline="central"
-      className="text-xs font-semibold"
-      style={{ pointerEvents: 'none' }}
+      style={{ 
+        pointerEvents: 'none',
+        fontSize: '12px',
+        fontWeight: '600',
+        textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+      }}
     >
       {`${percentage.toFixed(1)}%`}
     </text>
@@ -65,6 +70,8 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage })
 };
 
 export function CategoryChart({ data, className }) {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  
   if (!data || data.length === 0) {
     return (
       <div className={cn('glass-card p-6 text-center', className)}>
@@ -75,30 +82,60 @@ export function CategoryChart({ data, className }) {
   
   const chartData = data.map((item, index) => ({
     ...item,
-    color: COLORS[index % COLORS.length],
+    color: GRADIENT_COLORS[index % GRADIENT_COLORS.length],
+    colorId: `gradient-${index}`,
   }));
   
   return (
-    <div className={cn('glass-card p-6', className)}>
-      <h3 className="text-lg font-semibold mb-6">Spending by Category</h3>
+    <div className={cn('glass-card p-6 shadow-lg', className)}>
+      <div className="flex flex-col gap-2 mb-8">
+        <h3 className="text-xl font-bold text-[var(--text-primary)]">Spending by Category</h3>
+        <p className="text-xs text-[var(--text-muted)]">Distribution of your expenses across categories</p>
+      </div>
       
-      <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8 overflow-hidden">
-        <div className="h-64 w-64 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row items-start gap-8 overflow-hidden">
+        <div className="h-72 w-72 flex-shrink-0 relative">
+          {/* SVG for gradients */}
+          <svg width="0" height="0">
+            <defs>
+              {chartData.map((entry, index) => (
+                <linearGradient 
+                  key={entry.colorId}
+                  id={entry.colorId}
+                  x1="0%" y1="0%" x2="100%" y2="100%"
+                >
+                  <stop offset="0%" stopColor={entry.color.start} stopOpacity="1" />
+                  <stop offset="100%" stopColor={entry.color.end} stopOpacity="1" />
+                </linearGradient>
+              ))}
+            </defs>
+          </svg>
+          
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart style={{ animation: 'fadeInScale 0.8s ease-out' }}>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={2}
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={3}
                 dataKey="total"
                 nameKey="category"
                 label={<CustomLabel />}
+                onMouseEnter={(_, index) => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell 
+                    key={`cell-${index}`}
+                    fill={`url(#${entry.colorId})`}
+                    style={{
+                      filter: hoveredIndex === index ? 'brightness(1.2) drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                    }}
+                  />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
@@ -107,26 +144,48 @@ export function CategoryChart({ data, className }) {
         </div>
         
         {/* Legend */}
-        <div className="flex-1 w-full space-y-2 max-h-64 overflow-y-auto pr-2">
-          {chartData.slice(0, 6).map((item) => (
-            <div key={item.category} className="flex items-center gap-3">
-              <div 
-                className="w-3 h-3 rounded-full flex-shrink-0" 
-                style={{ backgroundColor: item.color }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.category}</p>
-                <p className="text-xs text-[var(--text-muted)]">
-                  {formatCurrency(item.total)}
-                </p>
+        <div className="flex-1 w-full space-y-3 max-h-80 overflow-y-auto pr-3">
+          {chartData.map((item, index) => (
+            <div 
+              key={item.category}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              className="p-3 rounded-lg transition-all duration-300 cursor-pointer"
+              style={{
+                backgroundColor: hoveredIndex === index ? 'rgba(255,255,255,0.05)' : 'transparent',
+                backdropFilter: hoveredIndex === index ? 'blur(10px)' : 'none',
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-4 h-4 rounded-full flex-shrink-0 shadow-md mt-0.5 transition-transform duration-300" 
+                  style={{ 
+                    background: `linear-gradient(135deg, ${item.color.start} 0%, ${item.color.end} 100%)`,
+                    transform: hoveredIndex === index ? 'scale(1.3)' : 'scale(1)',
+                  }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "font-semibold text-sm transition-all duration-300",
+                    hoveredIndex === index ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                  )}>
+                    {item.category}
+                  </p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {formatCurrency(item.total)}
+                    </p>
+                    <p className="text-xs font-semibold px-2 py-0.5 rounded-full bg-opacity-20" style={{
+                      backgroundColor: item.color.start,
+                      color: item.color.start,
+                    }}>
+                      {item.percentage.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
-          {data.length > 6 && (
-            <p className="text-xs text-[var(--text-muted)] pt-2">
-              +{data.length - 6} more
-            </p>
-          )}
         </div>
       </div>
     </div>
