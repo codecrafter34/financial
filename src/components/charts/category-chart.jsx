@@ -60,8 +60,8 @@ export function CategoryChart({ data, className }) {
     <div className={cn('glass-card p-6', className)}>
       <h3 className="text-lg font-semibold mb-6">Spending by Category</h3>
       
-      <div className="flex items-center gap-6">
-        <div className="h-64 flex-1">
+      <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+        <div className="h-64 w-64 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -84,7 +84,7 @@ export function CategoryChart({ data, className }) {
         </div>
         
         {/* Legend */}
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className="w-full lg:w-auto lg:flex-1 space-y-2 max-h-64 overflow-y-auto">
           {chartData.slice(0, 6).map((item) => (
             <div key={item.category} className="flex items-center gap-3">
               <div 
