@@ -364,13 +364,15 @@ export default function TransactionsPage() {
       
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">New Transaction</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-backdrop-fade-in p-4">
+          <div className="glass-card w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl animate-modal-scale-in">
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl z-10 backdrop-blur-md">
+              <h2 className="text-lg font-bold">New Transaction</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 rounded-lg hover:bg-[var(--surface-2)]"
+                className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -381,11 +383,11 @@ export default function TransactionsPage() {
                 e.preventDefault();
                 handleCreate(new FormData(e.currentTarget));
               }}
-              className="space-y-4"
+              className="space-y-5 p-6"
             >
               <div>
-                <label className="block text-sm font-medium mb-2">Type</label>
-                <select name="type" className="input-field w-full" required>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
+                <select name="type" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
                   {transactionTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
@@ -393,8 +395,8 @@ export default function TransactionsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
-                <select name="category" className="input-field" required>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
+                <select name="category" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
@@ -402,37 +404,39 @@ export default function TransactionsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Amount</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
                 <input
                   type="number"
                   name="amount"
                   step="0.01"
                   min="0.01"
-                  className="input-field w-full"
+                  className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                  required
+                  placeholder="0.00"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
                 <textarea
                   name="notes"
-                  className="input-field resize-none"
+                  className="input-field resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
                   rows={3}
                   placeholder="Add a description..."
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Tags (comma-separated)</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
                 <input
                   type="text"
                   name="tags"
-                  className="input-field"
+                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
                   placeholder="groceries, weekly, essentials"
                 />
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
@@ -455,16 +459,18 @@ export default function TransactionsPage() {
       
       {/* Edit Modal */}
       {showEditModal && editingTransaction && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">Edit Transaction</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-backdrop-fade-in p-4">
+          <div className="glass-card w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl animate-modal-scale-in">
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl z-10 backdrop-blur-md">
+              <h2 className="text-lg font-bold">Edit Transaction</h2>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingTransaction(null);
                 }}
-                className="p-2 rounded-lg hover:bg-[var(--surface-2)]"
+                className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -475,11 +481,11 @@ export default function TransactionsPage() {
                 e.preventDefault();
                 handleUpdate(new FormData(e.currentTarget));
               }}
-              className="space-y-4"
+              className="space-y-5 p-6"
             >
               <div>
-                <label className="block text-sm font-medium mb-2">Type</label>
-                <select name="type" className="input-field" required defaultValue={editingTransaction.type}>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
+                <select name="type" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.type}>
                   {transactionTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
@@ -487,8 +493,8 @@ export default function TransactionsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
-                <select name="category" className="input-field" required defaultValue={editingTransaction.category}>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
+                <select name="category" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.category}>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
@@ -496,39 +502,40 @@ export default function TransactionsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Amount</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
                 <input
                   type="number"
                   name="amount"
                   step="0.01"
                   min="0.01"
-                  className="input-field"
+                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
                   defaultValue={editingTransaction.amount}
                   required
+                  placeholder="0.00"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
                 <textarea
                   name="notes"
-                  className="input-field resize-none"
+                  className="input-field resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
                   rows={3}
                   defaultValue={editingTransaction.notes || ''}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Tags (comma-separated)</label>
+                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
                 <input
                   type="text"
                   name="tags"
-                  className="input-field"
+                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
                   defaultValue={editingTransaction.tags?.join(', ') || ''}
                 />
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
