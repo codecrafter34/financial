@@ -9,7 +9,7 @@ import { HealthScoreRing, HealthScoreRingSkeleton } from '@/components/dashboard
 import { ActivityTimeline, ActivityTimelineSkeleton } from '@/components/dashboard/activity-timeline';
 import { TrendChart, TrendChartSkeleton } from '@/components/charts/trend-chart';
 import { CategoryChart, CategoryChartSkeleton } from '@/components/charts/category-chart';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, RefreshCw, Lock, Eye, Crown } from 'lucide-react';
 import { useState } from 'react';
 
 export default function DashboardPage() {
@@ -25,17 +25,49 @@ export default function DashboardPage() {
   
   const canViewInsights = effectiveRole === 'ANALYST' || effectiveRole === 'ADMIN';
   const canViewHealthScore = effectiveRole === 'ANALYST' || effectiveRole === 'ADMIN';
+  const canEditTransactions = effectiveRole === 'ANALYST' || effectiveRole === 'ADMIN';
   
+  // Role badge
+  const getRoleBadgeColor = () => {
+    switch(effectiveRole) {
+      case 'ADMIN': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'ANALYST': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'VIEWER': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      default: return 'bg-gray-500/20 text-gray-400';
+    }
+  };
+  
+  const getRoleIcon = () => {
+    switch(effectiveRole) {
+      case 'ADMIN': return Crown;
+      case 'ANALYST': return Eye;
+      case 'VIEWER': return Lock;
+      default: return null;
+    }
+  };
+  
+  const RoleIcon = getRoleIcon();
+
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header with Role Badge */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">
-            Welcome back, <span className="gradient-text">{user?.name}</span>
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold">
+              Welcome back, <span className="gradient-text">{user?.name}</span>
+            </h1>
+            {RoleIcon && (
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${getRoleBadgeColor()}`}>
+                <RoleIcon className="w-4 h-4" />
+                <span className="text-sm font-medium">{effectiveRole}</span>
+              </div>
+            )}
+          </div>
           <p className="text-[var(--text-secondary)] mt-1">
-            {"Here's your financial overview"}
+            {effectiveRole === 'VIEWER' && "Read-only access to transactions and basic summary"}
+            {effectiveRole === 'ANALYST' && "Full analytics, insights, trends, and health scores"}
+            {effectiveRole === 'ADMIN' && "Full CRUD access, user management, and \"View As\" mode"}
           </p>
         </div>
         
@@ -60,6 +92,7 @@ export default function DashboardPage() {
           <button
             onClick={() => refetchSummary()}
             className="p-2 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface-3)] transition-colors"
+            title="Refresh data"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
@@ -126,30 +159,72 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* Insights and Health Score (Analyst/Admin only) */}
+      {/* AI Insights and Health Score (Analyst/Admin only) */}
       {canViewInsights && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Insights */}
-          <div className="glass-card p-6">
-            <h3 className="text-lg font-semibold mb-6">AI Insights</h3>
-            {insightsLoading ? (
-              <div className="space-y-4">
-                <InsightCardSkeleton />
-                <InsightCardSkeleton />
-              </div>
-            ) : insights ? (
-              <InsightsPanel insights={insights} maxDisplay={3} />
-            ) : null}
+        <div>
+          {/* Features Available for {ANALYST/ADMIN} */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">
+              🤖 AI-Powered Insights & 📊 Financial Health
+            </h2>
+            <p className="text-[var(--text-secondary)] mb-6">
+              Advanced analytics powered by rule-based AI engine. Includes anomaly detection using z-score and percentile analysis, spending insights with week-over-week comparisons, category analysis, and trend predictions.
+            </p>
           </div>
           
-          {/* Health Score */}
-          {canViewHealthScore && (
-            healthLoading ? (
-              <HealthScoreRingSkeleton />
-            ) : healthScore ? (
-              <HealthScoreRing healthScore={healthScore} />
-            ) : null
-          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Insights */}
+            <div className="glass-card p-6">
+              <h3 className="text-lg font-semibold mb-2">💡 AI-Generated Insights</h3>
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
+                "Your expenses increased 18% this week" • Category analysis • Trend predictions
+              </p>
+              {insightsLoading ? (
+                <div className="space-y-4">
+                  <InsightCardSkeleton />
+                  <InsightCardSkeleton />
+                </div>
+              ) : insights && insights.length > 0 ? (
+                <InsightsPanel insights={insights} maxDisplay={3} />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--text-muted)]">Add more transactions to generate insights</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Health Score */}
+            {canViewHealthScore && (
+              healthLoading ? (
+                <HealthScoreRingSkeleton />
+              ) : healthScore ? (
+                <div>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">⭐ Financial Health Score</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Calculated based on: Income/Expense Ratio (40%) • Spending Consistency (30%) • Anomaly Frequency (30%)
+                    </p>
+                  </div>
+                  <HealthScoreRing healthScore={healthScore} />
+                </div>
+              ) : null
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Viewer Role Message */}
+      {effectiveRole === 'VIEWER' && (
+        <div className="glass-card p-6 border border-green-500/20 bg-green-500/10">
+          <div className="flex items-start gap-4">
+            <Eye className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold mb-2">📖 Viewer Role Features</h3>
+              <p className="text-sm text-[var(--text-secondary)]">
+                You have read-only access to your transactions and basic financial summary. Upgrade to <strong>Analyst</strong> role to unlock AI-powered insights, health scores, advanced analytics, and trend predictions.
+              </p>
+            </div>
+          </div>
         </div>
       )}
       
@@ -169,7 +244,7 @@ export default function DashboardPage() {
               {summary.recentActivity.slice(0, 5).map((activity, i) => (
                 <div 
                   key={activity.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-2)] animate-fade-in"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface-3)] transition-colors animate-fade-in"
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div>
