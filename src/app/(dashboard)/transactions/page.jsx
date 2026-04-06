@@ -81,10 +81,10 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-[var(--text-secondary)] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Transactions</h1>
+          <p className="text-[var(--text-secondary)] mt-1 text-sm sm:text-base">
             Manage and view all financial transactions
           </p>
         </div>
@@ -92,7 +92,7 @@ export default function TransactionsPage() {
         {canCreate && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start"
           >
             <Plus className="w-5 h-5" />
             Add Transaction
@@ -102,14 +102,14 @@ export default function TransactionsPage() {
       
       {/* Filters */}
       <div className="glass-card p-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {/* Search */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search transactions..."
-              className="input-field pl-10"
+              className="input-field pl-10 w-full"
               value={filters.search || ''}
               onChange={(e) => setFilters({ ...filters, search: e.target.value || undefined })}
             />
@@ -118,7 +118,7 @@ export default function TransactionsPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'btn-secondary flex items-center gap-2',
+              'btn-secondary flex items-center gap-2 w-full sm:w-auto justify-center',
               showFilters && 'bg-[var(--primary-light)] border-[var(--primary)]'
             )}
           >
@@ -129,9 +129,9 @@ export default function TransactionsPage() {
         
         {/* Filter options */}
         {showFilters && (
-          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--border)] animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-4 pt-4 border-t border-[var(--border)] animate-fade-in">
             <select
-              className="input-field w-auto"
+              className="input-field"
               value={filters.type || ''}
               onChange={(e) => setFilters({ ...filters, type: e.target.value || undefined })}
             >
@@ -142,7 +142,7 @@ export default function TransactionsPage() {
             </select>
             
             <select
-              className="input-field w-auto"
+              className="input-field"
               value={filters.category || ''}
               onChange={(e) => setFilters({ ...filters, category: e.target.value || undefined })}
             >
@@ -155,7 +155,7 @@ export default function TransactionsPage() {
             {(filters.type || filters.category || filters.search) && (
               <button
                 onClick={() => setFilters({})}
-                className="text-sm text-[var(--text-muted)] hover:text-[var(--danger)]"
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--danger)] py-2 px-3 rounded-lg hover:bg-red-500/10 transition-colors"
               >
                 Clear filters
               </button>
@@ -166,7 +166,8 @@ export default function TransactionsPage() {
       
       {/* Transactions Table */}
       <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--border)]">
@@ -266,10 +267,76 @@ export default function TransactionsPage() {
           </table>
         </div>
         
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3 p-4">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton h-24 rounded-lg" />
+            ))
+          ) : data?.transactions.length === 0 ? (
+            <div className="p-8 text-center text-[var(--text-muted)]">
+              No transactions found
+            </div>
+          ) : (
+            data?.transactions.map((tx, i) => (
+              <div 
+                key={tx.id} 
+                className="bg-[var(--surface-2)] rounded-lg p-4 animate-fade-in"
+                style={{ animationDelay: `${i * 0.02}s` }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    {tx.type === 'INCOME' ? (
+                      <ArrowUpCircle className="w-5 h-5 text-green-400" />
+                    ) : (
+                      <ArrowDownCircle className="w-5 h-5 text-red-400" />
+                    )}
+                    <div>
+                      <span className={cn('font-medium text-sm', tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400')}>
+                        {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </span>
+                      <p className="text-xs text-[var(--text-muted)]">{formatDate(tx.date)}</p>
+                    </div>
+                  </div>
+                  {canDelete && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEdit(tx)}
+                        className="p-1.5 rounded-lg hover:bg-[var(--primary-light)] text-[var(--text-muted)] hover:text-[var(--primary)]"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tx.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-[var(--text-muted)] hover:text-red-400"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="badge bg-[var(--surface-3)] text-xs">{tx.category}</span>
+                  {tx.isAnomaly && (
+                    <div className="flex items-center gap-1 text-orange-400">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span className="text-xs">Anomaly</span>
+                    </div>
+                  )}
+                </div>
+                {tx.notes && (
+                  <p className="text-xs text-[var(--text-secondary)]">{tx.notes}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+        
         {/* Pagination */}
         {data && data.total > 20 && (
-          <div className="flex items-center justify-between p-4 border-t border-[var(--border)]">
-            <p className="text-sm text-[var(--text-muted)]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-[var(--border)]">
+            <p className="text-sm text-[var(--text-muted)] text-center sm:text-left">
               Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, data.total)} of {data.total}
             </p>
             <div className="flex items-center gap-2">
@@ -318,7 +385,7 @@ export default function TransactionsPage() {
             >
               <div>
                 <label className="block text-sm font-medium mb-2">Type</label>
-                <select name="type" className="input-field" required>
+                <select name="type" className="input-field w-full" required>
                   {transactionTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
@@ -341,9 +408,7 @@ export default function TransactionsPage() {
                   name="amount"
                   step="0.01"
                   min="0.01"
-                  className="input-field"
-                  placeholder="0.00"
-                  required
+                  className="input-field w-full"
                 />
               </div>
               
