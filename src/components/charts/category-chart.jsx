@@ -93,7 +93,7 @@ export function CategoryChart({ data, className }) {
         <p className="text-xs text-[var(--text-muted)]">Distribution of your expenses across categories</p>
       </div>
       
-      <div className="flex flex-col lg:flex-row items-start gap-8 overflow-hidden">
+      <div className="flex flex-col lg:flex-row items-start gap-8 overflow-visible">
         <div className="h-72 w-72 flex-shrink-0 relative">
           {/* SVG for gradients */}
           <svg width="0" height="0">
@@ -144,7 +144,7 @@ export function CategoryChart({ data, className }) {
         </div>
         
         {/* Legend */}
-        <div className="flex-1 w-full space-y-3 max-h-80 overflow-y-auto pr-3">
+        <div className="w-full lg:flex-1 lg:w-auto space-y-3 max-h-80 overflow-y-auto pr-3">
           {chartData.map((item, index) => (
             <div 
               key={item.category}
