@@ -52,11 +52,15 @@ export const updateTransactionSchema = createTransactionSchema.partial();
 export const transactionFiltersSchema = z.object({
   type: z.enum([TransactionType.INCOME, TransactionType.EXPENSE]).optional(),
   category: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  minAmount: z.coerce.number().positive().optional(),
+  maxAmount: z.coerce.number().positive().optional(),
   isAnomaly: z.coerce.boolean().optional(),
-  page: z.coerce.number().min(1).optional(),
-  limit: z.coerce.number().min(1).max(100).optional(),
+  tags: z.array(z.string()).optional(),
+  search: z.string().optional(),
+  page: z.coerce.number().min(1).default(1).optional(),
+  limit: z.coerce.number().min(1).max(100).default(20).optional(),
 });
 
 // Event filter schema

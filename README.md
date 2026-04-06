@@ -396,29 +396,259 @@ curl -X POST http://localhost:3000/api/transactions \
 
 ---
 
-## 🤔 Design Decisions
+## 🤔 Technical Decisions and Trade-offs
 
-### Why Event Sourcing Lite?
+### **1. Event Sourcing Lite**
 
-Instead of just storing current state, every mutation creates an event. This enables:
-- Complete audit trail
-- Activity timeline reconstruction
-- Easy debugging
-- Future analytics possibilities
+**Decision**: Store every state change as an immutable event in the Event table
 
-### Why Role-Aware API Responses?
+**Rationale**:
+- ✅ Complete audit trail for compliance and debugging
+- ✅ Enables activity timeline reconstruction (like GitHub)
+- ✅ Separates concerns: mutations create events, queries read projections
+- ✅ Future-proof for analytics and behavioral analysis
 
-Different roles need different data:
-- **Viewer**: Only sees totals, no detailed breakdown
-- **Analyst**: Full analytics but no user management
-- **Admin**: Everything + "View As" capability
+**Trade-off**: 
+- ⚠️ Extra database writes per transaction
+- ⚠️ Event table grows indefinitely (requires archival strategy)
 
-### Why Rule-Based AI Instead of LLM?
+**When to use**: Systems requiring compliance, detailed audit trails, or complex business intelligence
 
-- **Predictable**: Same inputs → same outputs
-- **Fast**: No API latency
-- **Free**: No token costs
-- **Transparent**: Rules are explainable
+---
+
+### **2. Role-Aware API Responses**
+
+**Decision**: Different roles receive different data structures from the same endpoint
+
+```javascript
+// Same endpoint, different responses based on role
+GET /api/analytics/summary
+- VIEWER: { total_income, total_expense }
+- ANALYST: { total_income, total_expense, by_category, trends }
+- ADMIN: { all of above + user_id, audit_metadata }
+```
+
+**Rationale**:
+- ✅ Single source of truth (one endpoint per resource)
+- ✅ Seamless role transitions (no client-side filtering needed)
+- ✅ Reduces frontend complexity
+- ✅ Enforces authorization at API level (more secure)
+
+**Trade-off**: 
+- ⚠️ More complex backend logic (conditional field inclusion)
+- ⚠️ Harder to document (responses vary)
+
+**When to use**: Multi-tenant systems with strict role separations
+
+---
+
+### **3. Rule-Based AI Over LLMs**
+
+**Decision**: Use statistical anomaly detection (z-score, percentiles) instead of calling external AI APIs
+
+```javascript
+// Rule-based: Fast, free, explainable
+anomalyScore = zscore(transaction_amount, category_mean, category_std)
+if (zscore > 2.5) flag as anomaly
+
+// vs. LLM approach: "Describe this spending pattern..."
+```
+
+**Rationale**:
+- ✅ **Predictable**: Same inputs always produce same outputs
+- ✅ **Fast**: <5ms vs. 500ms+ for LLM API
+- ✅ **Free**: No token costs
+- ✅ **Transparent**: Non-technical users understand "3 standard deviations"
+- ✅ **Offline**: Works without external dependencies
+
+**Trade-off**: 
+- ⚠️ Less sophisticated insights (no natural language generation)
+- ⚠️ Limited to statistical patterns (misses context)
+
+**When to use**: Real-time applications, cost-sensitive systems, or when explainability > accuracy
+
+---
+
+### **4. MongoDB Over PostgreSQL**
+
+**Decision**: Using MongoDB (originally was PostgreSQL in docs, now using MongoDB Atlas)
+
+**Rationale**:
+- ✅ **Flexible schema**: Categories and tags stored as arrays natively
+- ✅ **JSON native**: Analytics cache and event payload stored as native JSON
+- ✅ **Scalability**: Horizontal scaling easier for event streams
+- ✅ **Nested data**: Event metadata with complex structures
+
+**Trade-off**: 
+- ⚠️ No ACID transactions (less strict consistency)
+- ⚠️ No foreign key constraints (data integrity depends on app logic)
+- ⚠️ Higher storage (denormalization)
+
+**When to use**: Content-heavy apps, event systems, or when schema flexibility matters
+
+---
+
+### **5. Zustand + LocalStorage for Auth State**
+
+**Decision**: Persist JWT tokens to browser localStorage with Zustand middleware
+
+```javascript
+// Token persists across page reloads
+const token = useAuthStore(state => state.token)
+// Loaded from localStorage on app start
+```
+
+**Rationale**:
+- ✅ **Simpler**: No session backend needed
+- ✅ **Stateless**: Server doesn't track sessions
+- ✅ **Mobile-friendly**: Works with PWAs
+- ✅ **Faster SSR**: No server session lookup
+
+**Trade-off**: 
+- ⚠️ **XSS vulnerability**: Token exposed to JavaScript (use httpOnly in production)
+- ⚠️ **Manual refresh**: No automatic token refresh on expiry
+- ⚠️ **No logout force**: Old tokens remain valid until expiry
+
+**Mitigation**: 
+- Use `sameSite: strict` and CSP headers
+- Implement token rotation on refresh
+- Short JWT expiry (15 min), long refresh token (7 days)
+
+**When to use**: SPAs, mobile apps, or when session backend is unavailable
+
+---
+
+### **6. Prisma ORM with MongoDB**
+
+**Decision**: Use Prisma for type-safe database access to MongoDB
+
+```prisma
+model User {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  transactions Transaction[]
+}
+```
+
+**Rationale**:
+- ✅ **Type safety**: Full TypeScript inference
+- ✅ **Migrations**: Schema versioning with Prisma Migrate
+- ✅ **Query builder**: No raw MongoDB queries needed
+- ✅ **Relations**: Automatic JOIN simulation
+
+**Trade-off**: 
+- ⚠️ **Performance**: Extra abstraction layer (slower than native drivers)
+- ⚠️ **Limited aggregations**: Can't use MongoDB's full $group/$facet
+- ⚠️ **N+1 queries**: Eager loading needed for relations
+
+**When to use**: Rapid development, small-to-medium scale apps, or team consistency
+
+---
+
+### **7. Soft Deletes (isDeleted, deletedAt)**
+
+**Decision**: Mark records as deleted instead of removing them
+
+```prisma
+// Don't delete: 
+DELETE FROM transactions WHERE id = '123'
+
+// Instead:
+UPDATE transactions SET isDeleted = true, deletedAt = NOW() WHERE id = '123'
+```
+
+**Rationale**:
+- ✅ **Data recovery**: Restore deleted transactions if needed
+- ✅ **Audit**: Know when and by whom data was deleted
+- ✅ **Cascading safety**: Prevent orphaned records
+
+**Trade-off**: 
+- ⚠️ **Query complexity**: Every query needs `WHERE isDeleted = false`
+- ⚠️ **Storage overhead**: Keeps deleted data forever
+- ⚠️ **Privacy issues**: Can't truly delete user data (GDPR)
+
+**Mitigation**: 
+- Add archival process: Move old deleted records to separate table
+- Implement hard delete for GDPR compliance
+- Use database views to hide soft-deleted rows
+
+**When to use**: Systems requiring audit trails or frequent accidental deletions
+
+---
+
+### **8. Tailwind CSS with CSS Variables**
+
+**Decision**: Use Tailwind with CSS custom properties for theming
+
+```css
+/* globals.css */
+:root {
+  --primary: rgb(139, 92, 246);
+  --background: rgb(17, 24, 39);
+}
+
+/* JSX */
+<div className="bg-[var(--background)] text-[var(--primary)]" />
+```
+
+**Rationale**:
+- ✅ **Easy theming**: Change colors in CSS, not JSX
+- ✅ **Runtime switching**: Dark/Light mode toggle works
+- ✅ **Utility-first**: Keeps Tailwind benefits
+- ✅ **Glassmorphism**: Semi-transparent effects work better with CSS vars
+
+**Trade-off**: 
+- ⚠️ **Build complexity**: Mixing utility classes + vars
+- ⚠️ **Bundle size**: Extra CSS for theme support
+- ⚠️ **Browser support**: Variables not IE 11
+
+**When to use**: Modern browsers, apps needing dark mode, or design system consistency
+
+---
+
+### **9. "View As Role" Admin Feature**
+
+**Decision**: Allow admins to preview the system as any role
+
+```javascript
+// Admin can send header:
+X-View-As-Role: VIEWER
+
+// API responses adapt:
+// Same data structure as VIEWER sees
+```
+
+**Rationale**:
+- ✅ **Empathy testing**: Admins understand user experience
+- ✅ **Debugging**: Reproduce role-specific bugs
+- ✅ **Demo mode**: Show stakeholders what users see
+- ✅ **No new code**: Reuses existing RBAC logic
+
+**Trade-off**: 
+- ⚠️ **Security**: Could be abused if not properly logged
+- ⚠️ **Testing burden**: Must verify all role transitions
+
+**Mitigation**: 
+- Log all "View As" requests to audit trail
+- Only allow ADMIN role to use this feature
+- Require explicit confirmation
+
+**When to use**: Admin dashboards, multi-tenant systems, or complex UX testing
+
+---
+
+### **Summary Table**
+
+| Decision | Benefit | Risk | Alternative |
+|----------|---------|------|-------------|
+| Event Sourcing | Audit trail | DB bloat | Direct updates |
+| Role-aware API | Simplicity | Complex logic | Separate endpoints |
+| Rule-based AI | Speed | Less sophisticated | LLM API |
+| MongoDB | Flexibility | Consistency | PostgreSQL |
+| JWT + LocalStorage | Stateless | XSS risk | Session cookies |
+| Prisma ORM | Type safety | Performance | Raw queries |
+| Soft deletes | Recovery | Storage | Hard deletes |
+| Tailwind + CSS vars | Easy theming | Build complexity | Styled-components |
+| View As Role | Better UX | Security | Role-specific UI |
 
 ---
 

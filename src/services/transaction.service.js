@@ -102,11 +102,15 @@ export const transactionService = {
     // Apply category filter
     if (filterOptions.category) where.category = filterOptions.category;
     
-    // Apply date range
+    // Apply date range with proper Date parsing
     if (filterOptions.startDate || filterOptions.endDate) {
       where.date = {};
-      if (filterOptions.startDate) where.date.gte = filterOptions.startDate;
-      if (filterOptions.endDate) where.date.lte = filterOptions.endDate;
+      if (filterOptions.startDate) {
+        where.date.gte = new Date(filterOptions.startDate);
+      }
+      if (filterOptions.endDate) {
+        where.date.lte = new Date(filterOptions.endDate);
+      }
     }
     
     // Apply amount range
@@ -128,7 +132,7 @@ export const transactionService = {
     
     // Apply search (notes)
     if (filterOptions.search) {
-      where.notes = { contains: filterOptions.search };
+      where.notes = { contains: filterOptions.search, mode: 'insensitive' };
     }
     
     const [transactions, total] = await Promise.all([
