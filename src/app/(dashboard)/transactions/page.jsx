@@ -4,7 +4,7 @@ import { useTransactions, useCreateTransaction, useDeleteTransaction, useUpdateT
 import { useAuthStore } from '@/lib/store';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { TransactionType, Category } from '@/lib/constants';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -34,6 +34,18 @@ export default function TransactionsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showEditModal]);
   
   const { data, isLoading, refetch } = useTransactions({ ...filters, page, limit: 20 });
   const createMutation = useCreateTransaction();
@@ -364,197 +376,222 @@ export default function TransactionsPage() {
       
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-backdrop-fade-in p-4">
-          <div className="glass-card w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl animate-modal-scale-in">
-            {/* Sticky Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl z-10 backdrop-blur-md">
-              <h2 className="text-lg font-bold">New Transaction</h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
-                aria-label="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreate(new FormData(e.currentTarget));
-              }}
-              className="space-y-5 p-6"
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-backdrop-fade-in"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div 
+              className="relative bg-[var(--surface-1)] w-full max-w-md rounded-2xl shadow-2xl animate-modal-scale-in"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
-                <select name="type" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
-                  {transactionTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
-                <select name="category" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
-                <input
-                  type="number"
-                  name="amount"
-                  step="0.01"
-                  min="0.01"
-                  className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  required
-                  placeholder="0.00"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
-                <textarea
-                  name="notes"
-                  className="input-field resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  rows={3}
-                  placeholder="Add a description..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
-                <input
-                  type="text"
-                  name="tags"
-                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  placeholder="groceries, weekly, essentials"
-                />
-              </div>
-              
-              <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
+              {/* Fixed Header */}
+              <div className="bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl">
+                <h2 className="text-lg font-bold">New Transaction</h2>
                 <button
-                  type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="btn-secondary flex-1"
+                  className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+                  aria-label="Close modal"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? 'Creating...' : 'Create'}
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+              
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCreate(new FormData(e.currentTarget));
+                }}
+                className="max-h-[70vh] overflow-y-auto"
+              >
+                <div className="space-y-5 p-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
+                    <select name="type" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
+                      {transactionTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
+                    <select name="category" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      step="0.01"
+                      min="0.01"
+                      className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      required
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
+                    <textarea
+                      name="notes"
+                      className="input-field w-full resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      rows={3}
+                      placeholder="Add a description..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
+                    <input
+                      type="text"
+                      name="tags"
+                      className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      placeholder="groceries, weekly, essentials"
+                    />
+                  </div>
+                  
+                  <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(false)}
+                      className="btn-secondary flex-1"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary flex-1"
+                      disabled={createMutation.isPending}
+                    >
+                      {createMutation.isPending ? 'Creating...' : 'Create'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
       
       {/* Edit Modal */}
       {showEditModal && editingTransaction && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-backdrop-fade-in p-4">
-          <div className="glass-card w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl animate-modal-scale-in">
-            {/* Sticky Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl z-10 backdrop-blur-md">
-              <h2 className="text-lg font-bold">Edit Transaction</h2>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingTransaction(null);
-                }}
-                className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
-                aria-label="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdate(new FormData(e.currentTarget));
-              }}
-              className="space-y-5 p-6"
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-backdrop-fade-in"
+            onClick={() => {
+              setShowEditModal(false);
+              setEditingTransaction(null);
+            }}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div 
+              className="relative bg-[var(--surface-1)] w-full max-w-md rounded-2xl shadow-2xl animate-modal-scale-in"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
-                <select name="type" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.type}>
-                  {transactionTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
-                <select name="category" className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.category}>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
-                <input
-                  type="number"
-                  name="amount"
-                  step="0.01"
-                  min="0.01"
-                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  defaultValue={editingTransaction.amount}
-                  required
-                  placeholder="0.00"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
-                <textarea
-                  name="notes"
-                  className="input-field resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  rows={3}
-                  defaultValue={editingTransaction.notes || ''}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
-                <input
-                  type="text"
-                  name="tags"
-                  className="input-field focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
-                  defaultValue={editingTransaction.tags?.join(', ') || ''}
-                />
-              </div>
-              
-              <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
+              {/* Fixed Header */}
+              <div className="bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] border-b border-[var(--border)] px-6 py-5 flex items-center justify-between rounded-t-2xl">
+                <h2 className="text-lg font-bold">Edit Transaction</h2>
                 <button
-                  type="button"
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingTransaction(null);
                   }}
-                  className="btn-secondary flex-1"
+                  className="p-2 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+                  aria-label="Close modal"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+              
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUpdate(new FormData(e.currentTarget));
+                }}
+                className="max-h-[70vh] overflow-y-auto"
+              >
+                <div className="space-y-5 p-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Type</label>
+                    <select name="type" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.type}>
+                      {transactionTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Category</label>
+                    <select name="category" className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50" required defaultValue={editingTransaction.category}>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Amount</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      step="0.01"
+                      min="0.01"
+                      className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      defaultValue={editingTransaction.amount}
+                      required
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Notes (optional)</label>
+                    <textarea
+                      name="notes"
+                      className="input-field w-full resize-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      rows={3}
+                      defaultValue={editingTransaction.notes || ''}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-2.5 text-[var(--text-primary)]">Tags (comma-separated)</label>
+                    <input
+                      type="text"
+                      name="tags"
+                      className="input-field w-full focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-50"
+                      defaultValue={editingTransaction.tags?.join(', ') || ''}
+                    />
+                  </div>
+                  
+                  <div className="border-t border-[var(--border)] pt-5 mt-6 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingTransaction(null);
+                      }}
+                      className="btn-secondary flex-1"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary flex-1"
+                      disabled={updateMutation.isPending}
+                    >
+                      {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
